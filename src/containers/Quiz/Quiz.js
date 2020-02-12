@@ -1,15 +1,18 @@
 import React, {Component} from "react";
 import classes from './Quiz.module.css'
-import ActiveQuiz from "../../components/ActiveQuiz/ActiveQuiz";
+import ActiveQuiz from '../../components/ActiveQuiz/ActiveQuiz';
+import FinishedQuiz from '../../components/FinishedQuiz/FinishedQuiz'
 
 class Quiz extends Component {
 
     state = {
+        isFinished: false,
+        results: {},
         activeQuestion: 0,
-        answerState: null, // {i}
+        answerState: null,
         quiz: [
             {
-                id : 1,
+                id: 1,
                 question: 'Какого цвета синий?',
                 answers: [
                     {text: 'Черного', id: 1},
@@ -20,7 +23,7 @@ class Quiz extends Component {
                 rightAnswerId: 2,
             },
             {
-                id : 2,
+                id: 2,
                 question: 'Какого цвета красный?',
                 answers: [
                     {text: 'Черного', id: 1},
@@ -33,6 +36,16 @@ class Quiz extends Component {
         ],
     };
 
+    retryHandler = () => {
+        this.setState({
+            activeQuestion:0,
+            answerState: null,
+            isFinished:false,
+            results:{},
+        })
+    };
+
+
     onAnswerClickHandler = (answerId) => {
         //этот if запрещает прощелкивать вопросы быстрым многократным нажатием на правильный ответ
         if (this.state.answerState) {
@@ -43,15 +56,23 @@ class Quiz extends Component {
         }
 
         const question = this.state.quiz[this.state.activeQuestion];
+        const results = this.state.results;
 
         if (question.rightAnswerId === answerId) {
+            if (!results[question.id]) {
+                results[question.id] = 'success';
+            }
+
             this.setState({
-                answerState: { [answerId] : 'success'}
+                answerState: {[answerId]: 'success'},
+                results
             });
 
             const timeout = window.setTimeout(() => {
                 if (this.isQuizFinished()) {
-
+                    this.setState({
+                        isFinished: true,
+                    })
                 } else {
                     this.setState({
                         activeQuestion: this.state.activeQuestion + 1,
@@ -61,8 +82,10 @@ class Quiz extends Component {
                 window.clearTimeout(timeout);
             }, 1000);
         } else {
+            results[question.id] = 'error';
             this.setState({
-                answerState: { [answerId] : 'error'}
+                answerState: {[answerId]: 'error'},
+                results
             });
         }
     };
@@ -73,16 +96,24 @@ class Quiz extends Component {
 
     render() {
         return <div className={classes.Quiz}>
+
             <div className={classes.QuizWrapper}>
                 <h1>Ответьте на все вопросы</h1>
-                <ActiveQuiz
-                    onAnswerClick={this.onAnswerClickHandler}
-                    question={this.state.quiz[this.state.activeQuestion].question}
-                    answers={this.state.quiz[this.state.activeQuestion].answers}
-                    quizLength={this.state.quiz.length}
-                    answerNumber={this.state.activeQuestion + 1}
-                    state={this.state.answerState}
-                />
+                {this.state.isFinished ? <FinishedQuiz
+                        results={this.state.results}
+                        quiz={this.state.quiz}
+                        onRetry={this.retryHandler}
+                    /> :
+                    <ActiveQuiz
+                        onAnswerClick={this.onAnswerClickHandler}
+                        question={this.state.quiz[this.state.activeQuestion].question}
+                        answers={this.state.quiz[this.state.activeQuestion].answers}
+                        quizLength={this.state.quiz.length}
+                        answerNumber={this.state.activeQuestion + 1}
+                        state={this.state.answerState}
+                    />
+                }
+
             </div>
         </div>
     }
