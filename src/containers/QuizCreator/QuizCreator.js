@@ -81,6 +81,7 @@ class QuizCreator extends Component {
         //TODO Server
     };
 
+
     changeHandler = (value, controlName) => {
         const formControls = {...this.state.formControls};
         const control = formControls[controlName];
